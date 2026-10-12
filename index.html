@@ -1,386 +1,640 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova AI - 3D Cinema</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Cinema - 3D Panoramic Player</title>
 
-  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    body {
-      margin: 0;
-      background: #030407;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
+body {
+  margin: 0;
+  background: #05070b;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-    header {
-      padding: 18px 24px;
-      background: #090b11;
-      border-bottom: 1px solid #222735;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+header {
+  height: 65px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0b1019;
+  border-bottom: 1px solid #253247;
+}
 
-    header h2 {
-      margin: 0;
-      color: #75d9ff;
-      letter-spacing: 2px;
-    }
+header h2 {
+  color: #65d8ff;
+  letter-spacing: 2px;
+  margin: 0;
+}
 
-    .cinema {
-      height: 66vh;
-      min-height: 350px;
-      position: relative;
-      overflow: hidden;
-      background: radial-gradient(#202c3d, #030407 75%);
-    }
+header span {
+  color: #9cabc0;
+  font-size: 12px;
+}
 
-    a-scene {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      inset: 0;
-    }
+.cinema {
+  height: 65vh;
+  min-height: 340px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse, #1b2c42, #020307 75%);
+}
 
-    .controls {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #10141e;
-      border: 1px solid #273244;
-      border-radius: 16px;
-    }
+a-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 
-    .url-row {
-      display: flex;
-      gap: 10px;
-    }
+.labels {
+  position: absolute;
+  z-index: 2;
+  top: 15px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  color: #b0ddff;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  pointer-events: none;
+  text-shadow: 0 2px 8px black;
+}
 
-    input {
-      flex: 1;
-      min-width: 0;
-      padding: 13px;
-      border-radius: 8px;
-      border: 1px solid #394457;
-      background: #080b12;
-      color: white;
-    }
+.controls {
+  max-width: 950px;
+  margin: 22px auto;
+  padding: 22px;
+  background: #101622;
+  border: 1px solid #29364a;
+  border-radius: 16px;
+}
 
-    button {
-      border: 0;
-      border-radius: 8px;
-      padding: 12px 18px;
-      background: #168bff;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
+.controls h3 {
+  margin-top: 0;
+}
 
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 15px;
-    }
+.file-row,
+.playback,
+.volume-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-    .buttons button {
-      background: #222a3a;
-    }
+input[type="file"] {
+  flex: 1;
+  min-width: 220px;
+  padding: 12px;
+  border: 1px solid #35445a;
+  border-radius: 8px;
+  color: white;
+  background: #080d15;
+}
 
-    #status {
-      color: #9caec7;
-      font-size: 13px;
-      margin-top: 14px;
-    }
+button {
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #168bff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    @media (max-width: 600px) {
-      .cinema { height: 55vh; }
-      .url-row { flex-direction: column; }
-    }
-  </style>
+button:hover {
+  background: #36a2ff;
+}
+
+.playback {
+  margin-top: 16px;
+}
+
+.playback button {
+  background: #263348;
+}
+
+.playback button:hover {
+  background: #384d6c;
+}
+
+.volume-row {
+  margin-top: 20px;
+}
+
+input[type="range"] {
+  accent-color: #35aaff;
+  width: 170px;
+}
+
+#filename {
+  color: #d2e5ff;
+  overflow-wrap: anywhere;
+}
+
+#status {
+  color: #a0b4cf;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.note {
+  color: #74859e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  header {
+    padding: 0 12px;
+  }
+
+  header span {
+    font-size: 9px;
+  }
+
+  .cinema {
+    height: 55vh;
+    min-height: 280px;
+  }
+
+  .controls {
+    margin: 12px;
+    padding: 15px;
+  }
+
+  .file-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  input[type="file"] {
+    min-width: 0;
+    width: 100%;
+  }
+}
+</style>
 </head>
 
 <body>
-  <header>
-    <h2>NOVA CINEMA</h2>
-    <span>3D PANORAMIC PLAYER</span>
-  </header>
 
-  <main>
-    <section class="cinema">
-      <!-- The video is the shared texture source -->
-      <video
-        id="movie"
-        crossorigin="anonymous"
-        playsinline
-        preload="auto"
-        loop
-        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-        style="display:none">
-      </video>
+<header>
+  <h2>NOVA CINEMA</h2>
+  <span>3D PANORAMIC VIDEO PLAYER</span>
+</header>
 
-      <a-scene
-        embedded
-        vr-mode-ui="enabled: false"
-        renderer="colorManagement: true; antialias: true"
-        background="color: #030407"
-        loading-screen="enabled: false">
+<main>
 
-        <a-assets>
-          <a-mixin
-            id="panel-material"
-            material="shader: flat; side: double">
-          </a-mixin>
-        </a-assets>
+<section class="cinema" id="cinema">
 
-        <!-- All panels share the same curved video texture -->
-        <a-entity
-          id="leftWing"
-          video-panel="start: -55; end: -20; uStart: 0; uEnd: 0.318">
-        </a-entity>
+  <div class="labels">
+    <span>LEFT WING</span>
+    <span>CENTER SCREEN</span>
+    <span>RIGHT WING</span>
+  </div>
 
-        <a-entity
-          id="centerScreen"
-          video-panel="start: -20; end: 20; uStart: 0.318; uEnd: 0.682">
-        </a-entity>
+  <!-- Local video shared by all three screens -->
+  <video
+    id="movie"
+    playsinline
+    preload="auto"
+    loop
+    style="display:none">
+  </video>
 
-        <a-entity
-          id="rightWing"
-          video-panel="start: 20; end: 55; uStart: 0.682; uEnd: 1">
-        </a-entity>
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="antialias: true; colorManagement: true"
+    background="color: #03050a"
+    loading-screen="enabled: false">
 
-        <!-- Cinema floor -->
-        <a-plane
-          position="0 -2.5 -2"
-          rotation="-90 0 0"
-          width="200"
-          height="200"
-          color="#080b12">
-        </a-plane>
+    <!-- Left panel: first section of the video -->
+    <a-entity
+      video-panel="start: -55; end: -20; uStart: 0; uEnd: 0.3181818">
+    </a-entity>
 
-        <!-- Low ambient lighting -->
-        <a-light type="ambient" color="#b8c9ff" intensity="0.5">
-        </a-light>
+    <!-- Center panel: middle section -->
+    <a-entity
+      video-panel="start: -20; end: 20; uStart: 0.3181818; uEnd: 0.6818182">
+    </a-entity>
 
-        <a-light
-          type="point"
-          position="0 2 -3"
-          color="#318bff"
-          intensity="0.5">
-        </a-light>
+    <!-- Right panel: final section -->
+    <a-entity
+      video-panel="start: 20; end: 55; uStart: 0.6818182; uEnd: 1">
+    </a-entity>
 
-        <!-- Viewer looks straight at the center panel -->
-        <a-camera
-          position="0 0 0"
-          look-controls="enabled: true"
-          wasd-controls="enabled: true">
-        </a-camera>
+    <!-- Cinema floor -->
+    <a-plane
+      position="0 -2.4 -2"
+      rotation="-90 0 0"
+      width="200"
+      height="200"
+      color="#080b12">
+    </a-plane>
 
-      </a-scene>
-    </section>
+    <a-light
+      type="ambient"
+      color="#ffffff"
+      intensity="0.65">
+    </a-light>
 
-    <section class="controls">
-      <h3>Movie controls</h3>
+    <a-light
+      type="point"
+      position="0 2 -3"
+      color="#268aff"
+      intensity="0.4">
+    </a-light>
 
-      <div class="url-row">
-        <input
-          id="videoURL"
-          type="url"
-          placeholder="Paste a direct MP4 video URL">
-        <button id="loadBtn">Load video</button>
-      </div>
+    <!-- Camera -->
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled: true"
+      wasd-controls="enabled: true">
+    </a-camera>
 
-      <div class="buttons">
-        <button id="playBtn">▶ Play</button>
-        <button id="pauseBtn">Ⅱ Pause</button>
-        <button id="muteBtn">🔇 Mute</button>
-        <button id="fullscreenBtn">⛶ Fullscreen</button>
-      </div>
+  </a-scene>
+</section>
 
-      <p id="status">
-        Loading sample movie... Enter a direct MP4 URL to change it.
-      </p>
-    </section>
-  </main>
+<section class="controls">
 
-  <script>
-    // Create curved panels and map the correct section
-    // of the same video texture onto each panel.
-    AFRAME.registerComponent("video-panel", {
-      schema: {
-        start: { type: "number" },
-        end: { type: "number" },
-        uStart: { type: "number" },
-        uEnd: { type: "number" }
-      },
+  <h3>Choose your local movie</h3>
 
-      init: function () {
-        const data = this.data;
-        const video = document.querySelector("#movie");
+  <div class="file-row">
+    <input
+      type="file"
+      id="filePicker"
+      accept="video/*">
 
-        const radius = 5;
-        const height = 3.5;
-        const segments = 48;
+    <button id="loadBtn">Load Video</button>
+  </div>
 
-        const vertices = [];
-        const uvs = [];
-        const indices = [];
+  <p id="filename">No video selected</p>
 
-        for (let i = 0; i <= segments; i++) {
-          const t = i / segments;
-          const angle =
-            (data.start + (data.end - data.start) * t)
-            * Math.PI / 180;
+  <div class="playback">
+    <button id="playBtn">▶ Play</button>
+    <button id="pauseBtn">Ⅱ Pause</button>
+    <button id="restartBtn">↻ Restart</button>
+    <button id="muteBtn">🔊 Mute</button>
+    <button id="fullscreenBtn">⛶ Fullscreen</button>
+  </div>
 
-          const x = radius * Math.sin(angle);
-          const z = -radius * Math.cos(angle);
-          const u = data.uStart +
-            (data.uEnd - data.uStart) * t;
+  <div class="volume-row">
+    <label for="volume">Volume</label>
+    <input
+      id="volume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.05"
+      value="1">
+    <span id="volumeValue">100%</span>
+  </div>
 
-          // Top vertex
-          vertices.push(x, height / 2, z);
-          uvs.push(u, 1);
+  <p id="status">Choose a video file to begin.</p>
 
-          // Bottom vertex
-          vertices.push(x, -height / 2, z);
-          uvs.push(u, 0);
+  <p class="note">
+    Recommended format: MP4 with H.264 video and AAC audio.
+    Supported formats depend on your browser.
+    Your video stays on your computer and is not uploaded.
+  </p>
 
-          if (i < segments) {
-            const a = i * 2;
-            const b = a + 1;
-            const c = a + 2;
-            const d = a + 3;
+</section>
+</main>
 
-            indices.push(a, b, c);
-            indices.push(b, d, c);
-          }
-        }
+<script>
+// ================================================
+// 1. CREATE THREE CONNECTED CURVED VIDEO PANELS
+// ================================================
 
-        const geometry = new THREE.BufferGeometry();
+AFRAME.registerComponent("video-panel", {
+  schema: {
+    start: { type: "number" },
+    end: { type: "number" },
+    uStart: { type: "number" },
+    uEnd: { type: "number" }
+  },
 
-        geometry.setAttribute(
-          "position",
-          new THREE.Float32BufferAttribute(vertices, 3)
-        );
+  init: function () {
+    const d = this.data;
+    const radius = 5;
+    const height = 3.5;
+    const segments = 80;
 
-        geometry.setAttribute(
-          "uv",
-          new THREE.Float32BufferAttribute(uvs, 2)
-        );
+    const vertices = [];
+    const uvs = [];
+    const indices = [];
 
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const degrees = d.start + (d.end - d.start) * t;
+      const angle = degrees * Math.PI / 180;
 
-        const texture = new THREE.VideoTexture(video);
+      const x = radius * Math.sin(angle);
+      const z = -radius * Math.cos(angle);
+      const u = d.uStart + (d.uEnd - d.uStart) * t;
 
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.minFilter = THREE.LinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.generateMipmaps = false;
+      vertices.push(x, height / 2, z);
+      uvs.push(u, 1);
 
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.DoubleSide,
-          toneMapped: false
-        });
+      vertices.push(x, -height / 2, z);
+      uvs.push(u, 0);
 
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.el.object3D.add(this.mesh);
-      },
+      if (i < segments) {
+        const a = i * 2;
+        const b = a + 1;
+        const c = a + 2;
+        const e = a + 3;
 
-      remove: function () {
-        if (!this.mesh) return;
-
-        this.mesh.geometry.dispose();
-        this.mesh.material.dispose();
-        this.mesh.material.map?.dispose();
-
-        this.el.object3D.remove(this.mesh);
+        indices.push(a, b, c);
+        indices.push(b, e, c);
       }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(vertices, 3)
+    );
+
+    geometry.setAttribute(
+      "uv",
+      new THREE.Float32BufferAttribute(uvs, 2)
+    );
+
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    // Use one shared video texture.
+    // Each panel displays its own portion.
+    const texture = new THREE.VideoTexture(
+      document.getElementById("movie")
+    );
+
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.DoubleSide,
+      toneMapped: false
     });
 
-    const video = document.getElementById("movie");
-    const status = document.getElementById("status");
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.el.object3D.add(this.mesh);
+  },
 
-    // Play video after a user action if autoplay is blocked.
-    document.getElementById("playBtn").onclick = async () => {
-      try {
-        await video.play();
-        status.textContent = "Movie playing.";
-      } catch (error) {
-        status.textContent =
-          "Press Play again or check whether the video URL is accessible.";
-      }
-    };
+  remove: function () {
+    if (!this.mesh) return;
 
-    document.getElementById("pauseBtn").onclick = () => {
-      video.pause();
-      status.textContent = "Movie paused.";
-    };
+    this.mesh.geometry.dispose();
+    this.mesh.material.map.dispose();
+    this.mesh.material.dispose();
+    this.el.object3D.remove(this.mesh);
+  }
+});
 
-    document.getElementById("muteBtn").onclick = () => {
-      video.muted = !video.muted;
-      document.getElementById("muteBtn").textContent =
-        video.muted ? "🔇 Unmute" : "🔊 Mute";
-    };
 
-    document.getElementById("loadBtn").onclick = async () => {
-      const url = document.getElementById("videoURL").value.trim();
+// ================================================
+// 2. LOCAL VIDEO FILE SELECTION AND LOADING
+// ================================================
 
-      if (!url) {
-        status.textContent = "Enter a direct MP4 video URL.";
-        return;
-      }
+const video = document.getElementById("movie");
+const picker = document.getElementById("filePicker");
+const status = document.getElementById("status");
+const filename = document.getElementById("filename");
 
-      try {
-        new URL(url);
-      } catch {
-        status.textContent = "Please enter a valid video URL.";
-        return;
-      }
+let selectedFile = null;
+let objectURL = null;
+let loadRequest = 0;
 
-      video.pause();
-      video.src = url;
-      video.load();
+picker.addEventListener("change", function () {
+  selectedFile = picker.files[0] || null;
 
-      status.textContent = "Loading your movie...";
+  if (selectedFile) {
+    filename.textContent = "Selected: " + selectedFile.name;
+    status.textContent = "Click Load Video to prepare your movie.";
+  }
+});
 
-      try {
-        await new Promise((resolve, reject) => {
-          video.onloadeddata = resolve;
-          video.onerror = () => reject(
-            new Error("The video could not be loaded.")
-          );
-        });
+document.getElementById("loadBtn").addEventListener(
+  "click",
+  function () {
+    if (!selectedFile) {
+      status.textContent = "Please select a video file first.";
+      return;
+    }
 
-        await video.play();
-        status.textContent = "Your panoramic movie is playing.";
-      } catch (error) {
-        status.textContent =
-          "Could not play this URL. Use a direct, browser-compatible MP4 link.";
-      }
-    };
+    if (!selectedFile.type.startsWith("video/")) {
+      status.textContent = "Please select a supported video file.";
+      return;
+    }
 
-    document.getElementById("fullscreenBtn").onclick = () => {
-      document.querySelector(".cinema").requestFullscreen?.();
-    };
+    const request = ++loadRequest;
 
-    video.addEventListener("canplay", () => {
+    video.pause();
+
+    if (objectURL) {
+      URL.revokeObjectURL(objectURL);
+    }
+
+    objectURL = URL.createObjectURL(selectedFile);
+
+    video.removeAttribute("src");
+    video.src = objectURL;
+    video.load();
+
+    filename.textContent = selectedFile.name;
+    status.textContent = "Loading " + selectedFile.name + "...";
+
+    function onLoaded() {
+      cleanup();
+
+      if (request !== loadRequest) return;
+
       status.textContent =
-        "Sample video ready. Press Play to begin.";
-    });
+        "Video ready. Click Play to start the panoramic cinema.";
+    }
 
-    video.addEventListener("error", () => {
+    function onError() {
+      cleanup();
+
+      if (request !== loadRequest) return;
+
+      const code = video.error ? video.error.code : 0;
+
+      const errors = {
+        1: "Video loading was aborted.",
+        2: "Error reading the local video file.",
+        3: "Video decoding failed. Try an H.264 MP4.",
+        4: "Unsupported video format or codec."
+      };
+
       status.textContent =
-        "Video unavailable. Try another direct MP4 URL.";
-    });
-  </script>
+        errors[code] || "Unable to load this video.";
+    }
+
+    function cleanup() {
+      video.removeEventListener("loadeddata", onLoaded);
+      video.removeEventListener("error", onError);
+    }
+
+    video.addEventListener("loadeddata", onLoaded);
+    video.addEventListener("error", onError);
+
+    // Handle a video that was loaded immediately.
+    if (video.readyState >= 2) {
+      cleanup();
+      status.textContent =
+        "Video ready. Click Play to start the panoramic cinema.";
+    }
+  }
+);
+
+
+// ================================================
+// 3. PLAY
+// ================================================
+
+document.getElementById("playBtn").addEventListener(
+  "click",
+  async function () {
+    if (!video.src || video.readyState < 2) {
+      status.textContent = "Select and load a video first.";
+      return;
+    }
+
+    try {
+      await video.play();
+      status.textContent =
+        "Playing movie across the left, center, and right screens.";
+    } catch (error) {
+      console.error("Playback error:", error);
+      status.textContent =
+        "Playback failed. Check the video's format or codec.";
+    }
+  }
+);
+
+
+// ================================================
+// 4. PAUSE
+// ================================================
+
+document.getElementById("pauseBtn").addEventListener(
+  "click",
+  function () {
+    video.pause();
+    status.textContent = "Movie paused.";
+  }
+);
+
+
+// ================================================
+// 5. RESTART
+// ================================================
+
+document.getElementById("restartBtn").addEventListener(
+  "click",
+  async function () {
+    if (!video.src) {
+      status.textContent = "Load a video first.";
+      return;
+    }
+
+    try {
+      video.currentTime = 0;
+      await video.play();
+      status.textContent = "Movie restarted.";
+    } catch (error) {
+      status.textContent = "Click Play to start the movie.";
+    }
+  }
+);
+
+
+// ================================================
+// 6. MUTE AND VOLUME
+// ================================================
+
+document.getElementById("muteBtn").addEventListener(
+  "click",
+  function () {
+    video.muted = !video.muted;
+
+    this.textContent = video.muted ? "🔇 Unmute" : "🔊 Mute";
+  }
+);
+
+document.getElementById("volume").addEventListener(
+  "input",
+  function () {
+    video.volume = Number(this.value);
+
+    document.getElementById("volumeValue").textContent =
+      Math.round(video.volume * 100) + "%";
+
+    if (video.volume > 0) {
+      video.muted = false;
+      document.getElementById("muteBtn").textContent = "🔊 Mute";
+    }
+  }
+);
+
+
+// ================================================
+// 7. FULLSCREEN
+// ================================================
+
+document.getElementById("fullscreenBtn").addEventListener(
+  "click",
+  async function () {
+    const cinema = document.getElementById("cinema");
+
+    try {
+      if (!document.fullscreenElement) {
+        await cinema.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      status.textContent = "Fullscreen is unavailable.";
+    }
+  }
+);
+
+
+// ================================================
+// 8. STATUS AND CLEANUP
+// ================================================
+
+video.addEventListener("waiting", function () {
+  status.textContent = "Buffering video...";
+});
+
+video.addEventListener("ended", function () {
+  status.textContent = "Movie finished.";
+});
+
+window.addEventListener("beforeunload", function () {
+  if (objectURL) {
+    URL.revokeObjectURL(objectURL);
+  }
+});
+</script>
+
 </body>
 </html>
-```
