@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Cinema — WebGL Theatre</title>
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<style>
+:root{--red:#ff1744;--glass:rgba(23,27,34,.78);--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050609;color:#fff;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+body{isolation:isolate}
+#ambience{position:fixed;inset:-7%;width:114%;height:114%;object-fit:cover;filter:blur(32px) brightness(.24) saturate(1.25);transform:scale(1.08);opacity:.9;z-index:-3;background:radial-gradient(ellipse at center,#26313d,#030406 72%)}
+#shade{position:fixed;inset:0;z-index:-2;background:radial-gradient(ellipse at center,transparent 15%,rgba(0,0,0,.58) 85%),linear-gradient(180deg,rgba(0,0,0,.8),transparent 24%,transparent 68%,rgba(0,0,0,.92))}
+a-scene{position:fixed!important;inset:0;width:100%;height:100%;z-index:-1!important;background:transparent!important}
+a-scene canvas{pointer-events:none}
+.topbar{position:absolute;top:0;left:0;right:0;height:68px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#050608d9,transparent);z-index:5}
+.brand{font-weight:800;letter-spacing:.3px;font-size:18px}.brand span{color:var(--red)}
+.hint{font-size:12px;color:#c0c5ce;letter-spacing:.3px}
+.stage{position:absolute;inset:68px 0 112px;display:flex;align-items:center;justify-content:center;padding:12px 5vw 0;z-index:1}
+.screen-wrap{position:relative;width:min( min(78vw,1200px), calc((100vh - 205px)*1.7778));aspect-ratio:16/9;background:#000;border:1px solid rgba(255,255,255,.13);box-shadow:0 0 0 1px #000,0 25px 100px #000,0 0 75px rgba(91,129,170,.13);overflow:hidden}
+#player{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.screen-glow{pointer-events:none;position:absolute;inset:-1px;box-shadow:inset 0 0 55px rgba(0,0,0,.4)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,#19212b 0,#080a0e 62%,#000 100%)}
+.play-mark{width:70px;height:70px;border-radius:50%;border:1px solid #ffffff50;display:grid;place-items:center;background:#ffffff10;font-size:27px;margin-bottom:18px;box-shadow:0 0 45px #ffffff0b}
+.empty h1{font-size:clamp(20px,3vw,32px);margin:0 0 8px;letter-spacing:-.7px}.empty p{margin:0;color:#aab2be;font-size:14px;line-height:1.6}
+.load-btn{margin-top:22px;border:0;border-radius:24px;background:#f4f5f7;color:#12151b;padding:12px 20px;font-weight:750;cursor:pointer}
+.controls{position:absolute;left:0;right:0;bottom:0;z-index:6;padding:0 18px 16px;background:linear-gradient(transparent,rgba(0,0,0,.82) 28%,rgba(0,0,0,.96))}
+.progress-row{height:22px;display:flex;align-items:center;cursor:pointer}
+input[type=range]{accent-color:var(--red);cursor:pointer}
+#seek{width:100%;height:4px;margin:0;appearance:none;background:linear-gradient(to right,var(--red) 0%,var(--red) 0%,#ffffff55 0%,#ffffff55 100%);border-radius:10px}
+#seek::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px #ff174422}
+.control-row{display:flex;align-items:center;gap:10px;min-height:45px}
+.group{display:flex;align-items:center;gap:8px}
+.control{height:38px;min-width:38px;border:1px solid transparent;border-radius:22px;background:var(--glass);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;cursor:pointer;font-size:16px;transition:background .2s,transform .2s}
+.control:hover{background:#ffffff25;transform:translateY(-1px)}
+.control.primary{background:#ffffff24;font-size:18px}
+.time{font-size:12px;color:#e3e6eb;white-space:nowrap;font-variant-numeric:tabular-nums;margin-left:2px}
+.spacer{flex:1}
+#volume{width:76px}
+.status{position:absolute;top:16px;left:16px;background:#0009;border:1px solid #ffffff20;border-radius:18px;padding:7px 10px;font-size:11px;color:#e9edf4;z-index:2;backdrop-filter:blur(8px)}
+#file{display:none}
+.toast{position:absolute;top:78px;left:50%;transform:translateX(-50%);padding:10px 15px;border-radius:20px;background:#161a22e8;border:1px solid #ffffff20;color:#f4f5f8;font-size:13px;z-index:10;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media(max-width:650px){.topbar{height:54px;padding:0 14px}.hint{display:none}.stage{inset:54px 0 120px;padding:8px 10px}.screen-wrap{width:100%;aspect-ratio:16/9}.controls{padding:0 9px 10px}.control{min-width:34px;height:34px;padding:0 9px}.control-row{gap:5px;flex-wrap:wrap}.time{font-size:11px}#volume{width:48px}.topbar .brand{font-size:16px}}
+</style>
+</head>
+<body>
+<video id="ambience" muted playsinline></video>
+<div id="shade"></div>
+
+<!-- A-Frame creates the WebGL 3D theatre environment behind the custom video controls. -->
+<a-scene embedded vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false"
+         renderer="alpha:true; antialias:true; colorManagement:true" background="color:#050609">
+  <a-entity light="type: ambient; intensity:0.65"></a-entity>
+  <a-entity light="type: point; intensity:0.7; color:#7397c9" position="0 2 -3"></a-entity>
+  <a-sky color="#050609"></a-sky>
+  <a-plane position="0 0 -5" rotation="0 0 0" width="18" height="10" material="color:#080b11; roughness:1"></a-plane>
+  <a-plane position="0 0.1 -4.92" width="9.4" height="5.3" material="color:#182231; shader:flat; transparent:true; opacity:0.17"></a-plane>
+  <a-entity position="0 -2.5 -3">
+    <a-box position="0 0 0" width="14" height="0.25" depth="4" material="color:#10141c; roughness:0.9"></a-box>
+    <a-box position="0 0.2 -1.8" width="14" height="0.08" depth="0.08" material="color:#354052; emissive:#1d2c45"></a-box>
+  </a-entity>
+  <a-camera position="0 0 0" look-controls="enabled:false" wasd-controls="enabled:false"></a-camera>
+</a-scene>
+
+<header class="topbar">
+  <div class="brand">◉ <span>NOVA</span> CINEMA</div>
+  <div class="hint">IMMERSIVE WEBGL THEATRE&nbsp; · &nbsp; PRESS L TO LOAD</div>
+</header>
+
+<main class="stage">
+  <div class="screen-wrap">
+    <div class="status" id="status">THEATRE MODE · READY</div>
+    <video id="player" playsinline preload="metadata"></video>
+    <div class="empty" id="empty">
+      <div class="play-mark">▶</div>
+      <h1>Your personal cinema</h1>
+      <p>Load a movie from your device and enjoy it on the big screen.<br>Local playback · No upload required</p>
+      <button class="load-btn" id="choose">＋ &nbsp; Choose a video</button>
+    </div>
+    <div class="screen-glow"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<input id="file" type="file" accept="video/*,.mkv,.mov,.mp4,.webm,.avi">
+
+<footer class="controls">
+  <div class="progress-row"><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek video"></div>
+  <div class="control-row">
+    <div class="group">
+      <button class="control primary" id="play" title="Play / pause (Space)">▶</button>
+      <button class="control" id="stop" title="Stop and restart">■</button>
+      <button class="control" id="mute" title="Mute / unmute">🔊</button>
+      <input id="volume" type="range" min="0" max="1" step=".01" value=".8" aria-label="Volume">
+      <span class="time" id="time">00:00 / 00:00</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+      <button class="control" id="open" title="Open local video (L)">L&nbsp; Open</button>
+      <button class="control" id="theatre" title="Theatre mode">◫</button>
+      <button class="control" id="fullscreen" title="Fullscreen">⛶</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const video = document.getElementById('player');
+const ambience = document.getElementById('ambience');
+const fileInput = document.getElementById('file');
+const empty = document.getElementById('empty');
+const seek = document.getElementById('seek');
+const timeLabel = document.getElementById('time');
+const playBtn = document.getElementById('play');
+const muteBtn = document.getElementById('mute');
+const statusEl = document.getElementById('status');
+const toastEl = document.getElementById('toast');
+let objectUrl = null;
+let toastTimer = null;
+
+function toast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2100);
+}
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return '00:00';
+  const s = Math.floor(seconds);
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function updatePlayButton() {
+  playBtn.textContent = video.paused ? '▶' : 'Ⅱ';
+  statusEl.textContent = video.paused ? 'THEATRE MODE · PAUSED' : 'THEATRE MODE · PLAYING';
+}
+function togglePlay() {
+  if (!video.src) { openPicker(); return; }
+  if (video.paused) video.play().catch(() => toast('This video could not be played by the browser.'));
+  else video.pause();
+}
+function openPicker() { fileInput.click(); }
+
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files && fileInput.files[0];
+  if (!file) return;
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+  video.src = objectUrl;
+  ambience.src = objectUrl;
+  video.load();
+  ambience.load();
+  empty.style.display = 'none';
+  statusEl.textContent = 'THEATRE MODE · LOADING';
+  video.play().then(() => ambience.play().catch(() => {})).catch(() => {
+    updatePlayButton();
+    toast('Video loaded. Press Play to start.');
+  });
+  toast('Loaded: ' + file.name);
+});
+document.getElementById('choose').addEventListener('click', openPicker);
+document.getElementById('open').addEventListener('click', openPicker);
+playBtn.addEventListener('click', togglePlay);
+document.getElementById('stop').addEventListener('click', () => {
+  video.pause();
+  try { video.currentTime = 0; } catch (_) {}
+  updatePlayButton();
+  toast('Playback stopped and reset.');
+});
+muteBtn.addEventListener('click', () => {
+  video.muted = !video.muted;
+  muteBtn.textContent = video.muted ? '🔇' : '🔊';
+});
+document.getElementById('volume').addEventListener('input', e => {
+  video.volume = Number(e.target.value);
+  video.muted = video.volume === 0;
+  muteBtn.textContent = video.muted ? '🔇' : '🔊';
+});
+seek.addEventListener('input', () => {
+  if (Number.isFinite(video.duration) && video.duration > 0) {
+    video.currentTime = (Number(seek.value) / 1000) * video.duration;
+  }
+});
+video.addEventListener('timeupdate', () => {
+  const duration = video.duration || 0;
+  const current = video.currentTime || 0;
+  seek.value = duration ? Math.round(current / duration * 1000) : 0;
+  const pct = duration ? current / duration * 100 : 0;
+  seek.style.background = `linear-gradient(to right, var(--red) 0%, var(--red) ${pct}%, #ffffff55 ${pct}%, #ffffff55 100%)`;
+  timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+});
+video.addEventListener('play', updatePlayButton);
+video.addEventListener('pause', updatePlayButton);
+video.addEventListener('ended', updatePlayButton);
+video.addEventListener('loadedmetadata', () => {
+  timeLabel.textContent = `00:00 / ${formatTime(video.duration)}`;
+  statusEl.textContent = 'THEATRE MODE · READY';
+});
+document.getElementById('fullscreen').addEventListener('click', async () => {
+  const target = document.querySelector('.screen-wrap');
+  try {
+    if (!document.fullscreenElement) await target.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (_) { toast('Fullscreen is not available in this browser.'); }
+});
+document.getElementById('theatre').addEventListener('click', () => {
+  document.body.classList.toggle('theatre-only');
+  const active = document.body.classList.contains('theatre-only');
+  document.querySelector('.topbar').style.opacity = active ? '.18' : '1';
+  document.querySelector('.topbar').style.transition = 'opacity .25s';
+  toast(active ? 'Minimal theatre mode enabled.' : 'Standard theatre mode.');
+});
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') {
+    if (e.code !== 'Space') return;
+  }
+  if (e.code === 'KeyL') { e.preventDefault(); openPicker(); }
+  else if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  else if (e.code === 'ArrowRight' && video.src) video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10);
+  else if (e.code === 'ArrowLeft' && video.src) video.currentTime = Math.max(0, video.currentTime - 10);
+  else if (e.code === 'KeyM') { video.muted = !video.muted; muteBtn.textContent = video.muted ? '🔇' : '🔊'; }
+  else if (e.code === 'KeyF') document.getElementById('fullscreen').click();
+});
+window.addEventListener('beforeunload', () => { if (objectUrl) URL.revokeObjectURL(objectUrl); });
+video.volume = .8;
+</script>
+</body>
+</html>
