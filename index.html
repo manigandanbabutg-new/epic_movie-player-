@@ -4,13 +4,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nova Cinema | Panoramic 3D Player</title>
+<title>Nova Cinema | 3D Panoramic Player</title>
 
 <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
 <style>
 :root {
-  --glass: rgba(18, 27, 43, 0.66);
+  --glass: rgba(18, 27, 43, 0.68);
   --line: rgba(255, 255, 255, 0.14);
   --blue: #62d8ff;
   --muted: #9aabc3;
@@ -118,15 +118,18 @@ button {
 }
 
 .cinema {
-  height: clamp(350px, 58vw, 680px);
-  max-height: 72vh;
-  min-height: 350px;
+  height: 72vh;
+  min-height: 440px;
+  max-height: 780px;
   position: relative;
   overflow: hidden;
   border: 1px solid #8acbff25;
   border-radius: 16px;
-  background:
-    radial-gradient(ellipse at center, #182941, #03050a 78%);
+  background: radial-gradient(
+    ellipse at center,
+    #182941,
+    #03050a 78%
+  );
 }
 
 a-scene {
@@ -215,6 +218,7 @@ a-scene {
   background: linear-gradient(135deg, #2278c9, #554bd1);
   font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
   box-shadow: 0 5px 22px #398cff25;
 }
 
@@ -371,8 +375,8 @@ input[type="range"] {
   }
 
   .cinema {
-    height: 55vh;
-    min-height: 300px;
+    height: 65vh;
+    min-height: 350px;
   }
 
   .control-panel {
@@ -412,7 +416,6 @@ input[type="range"] {
 </head>
 
 <body>
-
 <div class="app">
 
   <header class="topbar">
@@ -445,7 +448,6 @@ input[type="range"] {
         <p>Choose a local movie below to fill all three connected screens.</p>
       </div>
 
-      <!-- One video source for all three walls -->
       <video
         id="movie"
         playsinline
@@ -461,32 +463,30 @@ input[type="range"] {
         background="color: #03050a"
         loading-screen="enabled: false">
 
-        <!-- LEFT WALL
-             The inner edge meets the front screen.
-             The outer edge turns toward the audience. -->
+        <!-- LEFT WING -->
         <a-entity
-          position="-4.25 0 -4"
-          rotation="0 37 0"
-          video-wall="width: 3.5; height: 3.5; uStart: 0; uEnd: 0.24">
+          position="-3.15 0 -4.2"
+          rotation="0 27 0"
+          video-wall="width: 2.8; height: 4.4; uStart: 0; uEnd: 0.24">
         </a-entity>
 
-        <!-- FRONT WALL: flat rectangular screen -->
+        <!-- TALLER FRONT SCREEN -->
         <a-entity
           position="0 0 -5"
           rotation="0 0 0"
-          video-wall="width: 6; height: 3.5; uStart: 0.24; uEnd: 0.76">
+          video-wall="width: 6; height: 4.4; uStart: 0.24; uEnd: 0.76">
         </a-entity>
 
-        <!-- RIGHT WALL -->
+        <!-- RIGHT WING -->
         <a-entity
-          position="4.25 0 -4"
-          rotation="0 -37 0"
-          video-wall="width: 3.5; height: 3.5; uStart: 0.76; uEnd: 1">
+          position="3.15 0 -4.2"
+          rotation="0 -27 0"
+          video-wall="width: 2.8; height: 4.4; uStart: 0.76; uEnd: 1">
         </a-entity>
 
-        <!-- Subtle cinema floor -->
+        <!-- CINEMA FLOOR -->
         <a-plane
-          position="0 -2.1 -2"
+          position="0 -2.5 -2"
           rotation="-90 0 0"
           width="200"
           height="200"
@@ -506,9 +506,9 @@ input[type="range"] {
           intensity="0.35">
         </a-light>
 
-        <!-- Audience viewing position -->
         <a-camera
           position="0 0 0"
+          fov="65"
           look-controls="enabled: true"
           wasd-controls="enabled: true">
         </a-camera>
@@ -519,10 +519,8 @@ input[type="range"] {
     <section class="control-panel">
 
       <div class="file-area">
-
         <label for="filePicker" class="file-button">
-          <span>＋</span>
-          Choose Movie
+          <span>＋</span> Choose Movie
         </label>
 
         <input
@@ -547,7 +545,6 @@ input[type="range"] {
       </div>
 
       <div class="control-row">
-
         <button class="ctrl primary" id="playBtn">▶ Play</button>
         <button class="ctrl" id="pauseBtn">Ⅱ</button>
         <button class="ctrl" id="restartBtn">↺</button>
@@ -567,14 +564,13 @@ input[type="range"] {
       <div class="status" id="status">
         Status: <span>Choose a movie to begin.</span>
       </div>
-
     </section>
 
     <footer class="footer">
-      Three connected projection surfaces · Local video playback · Glassmorphism controls
+      Three-wall panoramic cinema · Glassmorphism UI · Local playback
       <br>
-      Recommended: MP4 with H.264 video and AAC audio.
-      Your video stays in your browser and is not uploaded.
+      Recommended format: MP4 with H.264 video and AAC audio.
+      Your video stays in your browser.
     </footer>
 
   </main>
@@ -594,9 +590,9 @@ let objectURL = null;
 let loadVersion = 0;
 let seeking = false;
 
-// --------------------------------------------------
-// 1. THREE-SURFACE VIDEO WALL COMPONENT
-// --------------------------------------------------
+// -----------------------------------------------
+// CREATE THE THREE VIDEO WALLS
+// -----------------------------------------------
 
 AFRAME.registerComponent("video-wall", {
   schema: {
@@ -610,28 +606,22 @@ AFRAME.registerComponent("video-wall", {
     const d = this.data;
 
     const geometry = new THREE.PlaneGeometry(
-      d.width,
-      d.height,
-      64,
-      1
+      d.width, d.height, 64, 1
     );
 
-    // Each wall receives its own horizontal section
-    // of the SAME movie frame.
     const uv = geometry.attributes.uv;
 
     for (let i = 0; i < uv.count; i++) {
-      const originalU = uv.getX(i);
+      const u = uv.getX(i);
 
       uv.setX(
         i,
-        d.uStart + originalU * (d.uEnd - d.uStart)
+        d.uStart + u * (d.uEnd - d.uStart)
       );
     }
 
     uv.needsUpdate = true;
 
-    // All three materials share the same video element.
     const texture = new THREE.VideoTexture(video);
 
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -646,7 +636,6 @@ AFRAME.registerComponent("video-wall", {
     });
 
     this.mesh = new THREE.Mesh(geometry, material);
-
     this.el.object3D.add(this.mesh);
   },
 
@@ -656,23 +645,34 @@ AFRAME.registerComponent("video-wall", {
     this.mesh.geometry.dispose();
     this.mesh.material.map.dispose();
     this.mesh.material.dispose();
-
     this.el.object3D.remove(this.mesh);
   }
 });
 
-// --------------------------------------------------
-// 2. STATUS DISPLAY
-// --------------------------------------------------
+// -----------------------------------------------
+// STATUS AND TIME HELPERS
+// -----------------------------------------------
 
 function setStatus(message) {
   statusBox.innerHTML = "Status: <span></span>";
   statusBox.querySelector("span").textContent = message;
 }
 
-// --------------------------------------------------
-// 3. SELECT LOCAL MOVIE
-// --------------------------------------------------
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return "00:00";
+  }
+
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+
+  return String(mins).padStart(2, "0") + ":" +
+         String(secs).padStart(2, "0");
+}
+
+// -----------------------------------------------
+// SELECT LOCAL FILE
+// -----------------------------------------------
 
 picker.addEventListener("change", function () {
   selectedFile = picker.files[0] || null;
@@ -681,17 +681,16 @@ picker.addEventListener("change", function () {
 
   filename.textContent = selectedFile.name;
 
-  const sizeMB = selectedFile.size / (1024 * 1024);
-
   fileDetails.textContent =
-    sizeMB.toFixed(1) + " MB · Local video file";
+    (selectedFile.size / (1024 * 1024)).toFixed(1) +
+    " MB · Local video file";
 
   setStatus("File selected. Click Load Video.");
 });
 
-// --------------------------------------------------
-// 4. LOAD LOCAL FILE SAFELY
-// --------------------------------------------------
+// -----------------------------------------------
+// LOAD VIDEO
+// -----------------------------------------------
 
 document.getElementById("loadBtn").addEventListener(
   "click",
@@ -709,7 +708,6 @@ document.getElementById("loadBtn").addEventListener(
     const version = ++loadVersion;
 
     video.pause();
-    welcome.classList.remove("hidden");
 
     if (objectURL) {
       URL.revokeObjectURL(objectURL);
@@ -721,6 +719,7 @@ document.getElementById("loadBtn").addEventListener(
     video.src = objectURL;
     video.load();
 
+    welcome.classList.remove("hidden");
     setStatus("Loading " + selectedFile.name + "...");
 
     const onLoaded = function () {
@@ -728,18 +727,16 @@ document.getElementById("loadBtn").addEventListener(
 
       if (version !== loadVersion) return;
 
-      welcome.classList.remove("hidden");
+      document.getElementById("duration").textContent =
+        formatTime(video.duration);
+
+      seek.value = 0;
 
       document.querySelector("#welcome strong").textContent =
         "Movie ready";
 
       document.querySelector("#welcome p").textContent =
-        "Press Play to start your panoramic experience.";
-
-      document.getElementById("duration").textContent =
-        formatTime(video.duration);
-
-      seek.value = 0;
+        "Press Play to start your panoramic cinema.";
 
       setStatus("Movie loaded successfully. Press Play.");
     };
@@ -753,9 +750,9 @@ document.getElementById("loadBtn").addEventListener(
 
       const messages = {
         1: "Video loading was aborted.",
-        2: "Unable to read the local file.",
-        3: "Video decoding failed. Try an H.264 MP4.",
-        4: "This video format or codec is not supported."
+        2: "Unable to read the local video file.",
+        3: "Decoding failed. Try an H.264 MP4.",
+        4: "Unsupported video format or codec."
       };
 
       setStatus(messages[code] || "Unable to load this movie.");
@@ -769,7 +766,6 @@ document.getElementById("loadBtn").addEventListener(
     video.addEventListener("loadeddata", onLoaded);
     video.addEventListener("error", onError);
 
-    // Handle videos that load immediately.
     if (video.readyState >= 2) {
       cleanup();
 
@@ -781,9 +777,9 @@ document.getElementById("loadBtn").addEventListener(
   }
 );
 
-// --------------------------------------------------
-// 5. PLAY AND PAUSE
-// --------------------------------------------------
+// -----------------------------------------------
+// PLAY AND PAUSE
+// -----------------------------------------------
 
 document.getElementById("playBtn").addEventListener(
   "click",
@@ -795,15 +791,11 @@ document.getElementById("playBtn").addEventListener(
 
     try {
       await video.play();
-
       welcome.classList.add("hidden");
-
-      document.getElementById("playBtn").textContent = "▶ Playing";
-
       setStatus("Movie playing across all three screens.");
     } catch (error) {
       console.error(error);
-      setStatus("Playback failed. Try an H.264 MP4 video.");
+      setStatus("Playback failed. Try an H.264 MP4.");
     }
   }
 );
@@ -812,16 +804,13 @@ document.getElementById("pauseBtn").addEventListener(
   "click",
   function () {
     video.pause();
-
-    document.getElementById("playBtn").textContent = "▶ Play";
-
     setStatus("Movie paused.");
   }
 );
 
-// --------------------------------------------------
-// 6. RESTART MOVIE
-// --------------------------------------------------
+// -----------------------------------------------
+// RESTART
+// -----------------------------------------------
 
 document.getElementById("restartBtn").addEventListener(
   "click",
@@ -834,9 +823,7 @@ document.getElementById("restartBtn").addEventListener(
     try {
       video.currentTime = 0;
       await video.play();
-
       welcome.classList.add("hidden");
-
       setStatus("Movie restarted.");
     } catch (error) {
       setStatus("Movie reset. Press Play to start.");
@@ -844,15 +831,14 @@ document.getElementById("restartBtn").addEventListener(
   }
 );
 
-// --------------------------------------------------
-// 7. VOLUME AND MUTE
-// --------------------------------------------------
+// -----------------------------------------------
+// MUTE AND VOLUME
+// -----------------------------------------------
 
 document.getElementById("muteBtn").addEventListener(
   "click",
   function () {
     video.muted = !video.muted;
-
     this.textContent = video.muted ? "🔇" : "🔊";
   }
 );
@@ -869,18 +855,16 @@ document.getElementById("volume").addEventListener(
   }
 );
 
-// --------------------------------------------------
-// 8. SEEK BAR
-// --------------------------------------------------
+// -----------------------------------------------
+// SEEK BAR
+// -----------------------------------------------
 
 seek.addEventListener("input", function () {
   seeking = true;
 
   if (Number.isFinite(video.duration) && video.duration > 0) {
-    const time = (Number(this.value) / 1000) * video.duration;
-
     document.getElementById("currentTime").textContent =
-      formatTime(time);
+      formatTime((Number(this.value) / 1000) * video.duration);
   }
 });
 
@@ -901,15 +885,13 @@ video.addEventListener("timeupdate", function () {
   document.getElementById("currentTime").textContent =
     formatTime(video.currentTime);
 
-  if (Number.isFinite(video.duration)) {
-    document.getElementById("duration").textContent =
-      formatTime(video.duration);
-  }
+  document.getElementById("duration").textContent =
+    formatTime(video.duration);
 });
 
-// --------------------------------------------------
-// 9. FULLSCREEN
-// --------------------------------------------------
+// -----------------------------------------------
+// FULLSCREEN
+// -----------------------------------------------
 
 document.getElementById("fullscreenBtn").addEventListener(
   "click",
@@ -923,26 +905,14 @@ document.getElementById("fullscreenBtn").addEventListener(
         await document.exitFullscreen();
       }
     } catch (error) {
-      setStatus("Fullscreen is not available in this browser.");
+      setStatus("Fullscreen is unavailable in this browser.");
     }
   }
 );
 
-// --------------------------------------------------
-// 10. HELPERS AND CLEANUP
-// --------------------------------------------------
-
-function formatTime(seconds) {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return "00:00";
-  }
-
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-
-  return String(mins).padStart(2, "0") + ":" +
-         String(secs).padStart(2, "0");
-}
+// -----------------------------------------------
+// PLAYER EVENTS AND CLEANUP
+// -----------------------------------------------
 
 video.addEventListener("waiting", function () {
   setStatus("Buffering movie...");
@@ -962,9 +932,7 @@ video.addEventListener("ended", function () {
 });
 
 window.addEventListener("beforeunload", function () {
-  if (objectURL) {
-    URL.revokeObjectURL(objectURL);
-  }
+  if (objectURL) URL.revokeObjectURL(objectURL);
 });
 </script>
 
